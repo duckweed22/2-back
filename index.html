@@ -103,18 +103,21 @@
         <p></p>
         <p></p>
         <p></p>
+        <p></p>
+        <p></p>
     </div>
 
 </body>
 <script>
-    var visual_list = [[0, 4, 2, 4, 3, 5, 5, 5, 8, 3], [2, 9, 0, 5, 0, 5, 4, 4, 5, 4], [3, 3, 7, 6, 5, 6, 4, 6, 6, 4], [6, 7, 5, 7, 4, 7, 3, 2, 3, 6], [4, 5, 6, 5, 3, 2, 7, 2, 6, 7], [5, 8, 3, 5, 3, 3, 3, 3, 5, 3], [4, 5, 6, 6, 5, 6, 4, 3, 4, 3], [9, 6, 9, 3, 4, 3, 5, 6, 5, 8], [7, 5, 7, 3, 7, 5, 4, 4, 3, 3], [9, 9, 7, 6, 7, 9, 9, 7, 9, 4], [4, 6, 3, 2, 1, 2, 4, 5, 4, 5], [3, 4, 5, 4, 8, 0, 9, 0, 5, 6], [5, 6, 4, 6, 3, 3, 3, 4, 5, 1], [2, 1, 1, 4, 5, 4, 6, 7, 6, 6], [3, 4, 2, 1, 1, 2, 1, 4, 0, 4], [6, 4, 5, 4, 3, 1, 2, 1, 4, 5], [7, 6, 7, 4, 3, 4, 4, 4, 5, 5], [0, 0, 8, 5, 8, 4, 5, 5, 3, 5], [5, 6, 4, 6, 6, 7, 7, 7, 4, 5], [6, 7, 7, 7, 8, 4, 3, 4, 5, 2]]
+    var visual_list = [[8, 6, 6, 8, 7, 8, 5, 4, 5, 6], [4, 5, 5, 6, 7, 5, 5, 4, 3, 4], [2, 3, 4, 3, 3, 2, 4, 4, 5, 6], [3, 4, 5, 4, 3, 4, 2, 1, 1, 2], [4, 1, 2, 3, 2, 4, 9, 8, 5, 6], [3, 2, 4, 2, 4, 5, 6, 7, 4, 5], [2, 3, 2, 1, 4, 5, 4, 6, 6, 7], [7, 6, 7, 5, 3, 4, 6, 5, 5, 7], [3, 5, 6, 5, 7, 8, 9, 4, 5, 6], [1, 3, 4, 2, 5, 2, 6, 5, 4, 7], [4, 3, 5, 3, 3, 4, 6, 5, 4, 1], [0, 9, 8, 0, 6, 5, 6, 3, 4, 5], [3, 5, 0, 5, 3, 4, 7, 8, 9, 9], [4, 5, 2, 6, 0, 7, 6, 4, 5, 4], [3, 5, 2, 3, 2, 8, 6, 5, 0, 7], [1, 2, 6, 8, 6, 7, 9, 0, 0, 5], [4, 7, 8, 6, 8, 4, 5, 4, 1, 3], [6, 4, 6, 3, 4, 5, 4, 9, 5, 5], [2, 3, 6, 7, 6, 8, 6, 3, 3, 4], [3, 5, 6, 7, 4, 7, 0, 3, 0, 2]]
     // 设置参数
-    var set_time = 2;//每个数字出现的持续时间
+    var set_time = 1.5;//每个数字出现的持续时间
 
     var ReactTime = [];//反应时间存放的数组|0:不需要按且没按；1:需要按没按；-1:不需要按按了；其他数字：需要按且按下的时间戳
     var success_count = 0;//点击正确的次数
     var fail_count = 0;//点击错误的次数
     var miss_count = 0;//错过点击的次数
+    var miss_true = 0;//正确错过的次数
     var total_time = 1000;//游戏总时长
     var random_list = [];//随机产生的数组
     var timer;
@@ -122,6 +125,7 @@
     var flag = 0;
     var k=0;
     var random_list_pre=[];
+
 
     var number = document.querySelector('.game_area')
     var result = document.querySelector('.result')
@@ -138,88 +142,110 @@
         total_time = 0;
     })
     if (total_time > 0) {
-        number.addEventListener('click', fn);
+        number.addEventListener('click', onNumberClick);
     }
-    function fn() {
-        console.log("你点击了start")
-        var random_number;
-        clearInterval(timer);
-        timer = setInterval(function () {
-            ReactTime[flag] = 0;
-            start_time = Date.now();
-            // random_number = Math.floor(Math.random() * 10)
-            random_list_pre=PseudoRandom();
-            random_number=random_list_pre[k];
-            k++;
-            if(k>=200){
-                k=0;
-            }
-            random_list.push(random_number)
-
-            number.innerHTML = random_number;
-            number.style.background = randomRgbColor()
-            if (random_number == random_list[flag - 2]) {
-                ReactTime[flag] = 1
-                document.onclick = function (e) {
-                    var evt = e || window.event;
-                    var tar = evt.target || evt.srcElement;
-                    if (tar == number) {
-                        end_time = Date.now();
-                        ReactTime[flag - 1] = (end_time - start_time);
-                        feedback.innerHTML = '🎉恭喜，点击对了！'
-                        console.log("点击对了", end_time - start_time)
-                    }
+   
+    function handleCreateTimer(){
+        clearTimeout(timer)
+        total_time--;
+        end_time = Date.now()
+        setNumber()
+        if(total_time > 0){
+            timer = setTimeout(() => {
+                // 开始时间
+                let length = random_list.length
+                if(length > 2 && random_list[length - 1] === random_list[length - 3]){
+                    // 漏点
+                    miss_count++
+                    setGeedBack(1)
+                } else {
+                    //正确错过
+                    miss_true++;
+                    setGeedBack(0)
                 }
+                // 重新开始
+                handleCreateTimer()
+            }, set_time * 1000)
+        } else {
+            // 游戏结束
+            number.removeEventListener('click', onNumberClick);
+        }
+    }
 
+    function onNumberClick(){
+        let length = random_list.length
+        if (length == 1){
+            result = 999;
+        }
+        else if (length == 2){
+            result = 999;
+        }
+        else if(length > 2){
+            let result = 0
+            if(random_list[length - 1] === random_list[length - 3]){
+                end_time = Date.now()
+                result = 'right'//点对了
+                success_count++
+            } else if (random_list[length - 1] != random_list[length - 3])
+            {
+                result = -1//点错了
+                fail_count++
             }
-            if (random_number != random_list[flag - 2]) {
-                document.onclick = function (e) {
-                    var evt = e || window.event;
-                    var tar = evt.target || evt.srcElement;
-                    if (tar == number) {
-                        ReactTime[flag - 1] = -1
-                        feedback.innerHTML = '😭抱歉，点击错了！'
-                        console.log("点击错了")
-                    }
-                }
-            }
-            flag++;
-            total_time--;
-            console.log(total_time);
-            if (total_time <= 0) {
-                clearInterval(timer);
-                for (var i = 0; i < 2; i++) {
-                    ReactTime[i] = 999;
-                }
-                for (var i = 0; i < ReactTime.length; i++) {
-                    if (ReactTime[i] == 1) {
-                        miss_count++;
-                    }
-                    else if (ReactTime[i] == -1) {
-                        fail_count++;
-                    }
-                    else if (ReactTime[i] == 0) {
+            setGeedBack(result)
+        }
+        handleCreateTimer()
+    }
 
-                    }
-                    else if (ReactTime[i] == 999) {
+    // 设置随机数字
+    function setNumber(){
+        random_list_pre=PseudoRandom();
+        random_number=random_list_pre[k];
+        k++;
+        if(k>=200){
+            k=0;
+        }
+        random_list.push(random_number)
 
-                    }
-                    else {
-                        success_count++;
-                    }
-                }
-                console.log("React_Time:", ReactTime)
-                console.log("random_list", random_list)
-                number.removeEventListener('click', fn);
-                var p1 = "正确点击" + success_count + "次"
-                result.children[1].innerHTML = p1
-                var p2 = "错误点击" + fail_count + "次"
-                result.children[2].innerHTML = p2
-                var p3 = "漏点" + miss_count + "次"
-                result.children[3].innerHTML = p3
-                // result.style.display = "block";
-            }
-        }, set_time * 1000)
+        number.innerHTML = random_number;
+        number.style.background = randomRgbColor()
+    }
+    // 设置反馈
+    function setGeedBack(result){
+        ReactTime.push(result)
+        console.log("React_Time:", ReactTime)
+        console.log("random_list", random_list)
+        setStatisticResult()
+        switch (result) {
+            case 1:
+                feedback.innerHTML = '漏点了！'
+                console.log("漏点了！")
+                break;
+            case -1:
+                feedback.innerHTML = '😭抱歉，点击错了！'
+                console.log("点击错了")
+                break;
+            case 0:
+                feedback.innerHTML = ' '
+                break;
+            default:
+                feedback.innerHTML = '🎉恭喜，点击对了！'
+                console.log("点击对了", end_time - start_time)
+                break;
+        }
+    }
+    // 统计结果
+    function setStatisticResult(){
+        var p1 = "正确点击" + success_count + "次"
+        result.children[1].innerHTML = p1
+        var p2 = "错误点击" + fail_count + "次"
+        result.children[2].innerHTML = p2
+        var p3 = "漏点" + miss_count + "次"
+        result.children[3].innerHTML = p3
+        var p4 = "正确错过" + (miss_true-1) + "次"
+        result.children[4].innerHTML = p4
+        var true_percent=Math.round((miss_true-1+success_count)/(ReactTime.length-1)*100)+"%"
+        var p5="正确率" +true_percent
+        result.children[5].innerHTML = p5
     }
     function randomRgbColor() { //随机生成RGB颜色
         var r = Math.floor(Math.random() * 256); //随机生成256以内r值
