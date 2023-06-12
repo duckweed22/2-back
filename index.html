@@ -247,6 +247,9 @@
     // 统计结果
     function setStatisticResult(){
         if (ReactTime.length>2){
+            var true_percent=Math.round((miss_true+success_count)/(ReactTime.length-2)*100)+"%"
+            var p5="正确率" +true_percent
+            result.children[5].innerHTML = p5
             var p1 = "正确点击" + success_count + "次"
             result.children[1].innerHTML = p1
             var p2 = "错误点击" + fail_count + "次"
@@ -255,9 +258,7 @@
             result.children[3].innerHTML = p3
             var p4 = "正确错过" + (miss_true) + "次"
             result.children[4].innerHTML = p4
-            var true_percent=Math.round((miss_true+success_count)/(ReactTime.length-2)*100)+"%"
-            var p5="正确率" +true_percent
-            result.children[5].innerHTML = p5
+            
         }
         
     }
